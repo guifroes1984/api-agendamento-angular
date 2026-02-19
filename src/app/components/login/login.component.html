@@ -1,83 +1,88 @@
-<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light">
-  <div class="row w-100 justify-content-center">
-    <div class="col-12 col-md-6 col-lg-4">
-      <div class="card shadow-lg border-0 rounded-4">
-        <div class="card-body p-5">
-          
-          <div class="text-center mb-4">
-            <i class="bi bi-shield-lock fs-1 text-primary"></i>
-            <h2 class="fw-bold mt-3">Moto Control</h2>
-            <p class="text-muted">Faça login para continuar</p>
-          </div>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+  <div class="max-w-md w-full">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      
+      <!-- Cabeçalho -->
+      <div class="text-center mb-8">
+        <div class="bg-blue-100 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-shield-lock text-4xl text-blue-600"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900">Moto Control</h1>
+        <p class="text-gray-500 mt-2">Faça login para continuar</p>
+      </div>
 
-          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            {{ errorMessage }}
-            <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
-          </div>
-
-          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-            
-            <div class="mb-3">
-              <label for="usuario" class="form-label fw-semibold">
-                <i class="bi bi-person-circle me-2"></i>Usuário
-              </label>
-              <input 
-                type="text" 
-                class="form-control form-control-lg" 
-                id="usuario"
-                formControlName="usuario"
-                [class.is-invalid]="loginForm.get('usuario')?.invalid && loginForm.get('usuario')?.touched"
-                placeholder="Digite seu usuário"
-              >
-              <div *ngIf="loginForm.get('usuario')?.invalid && loginForm.get('usuario')?.touched" 
-                   class="invalid-feedback">
-                Usuário é obrigatório
-              </div>
-            </div>
-
-            <div class="mb-4">
-              <label for="senha" class="form-label fw-semibold">
-                <i class="bi bi-key-fill me-2"></i>Senha
-              </label>
-              <input 
-                type="password" 
-                class="form-control form-control-lg" 
-                id="senha"
-                formControlName="senha"
-                [class.is-invalid]="loginForm.get('senha')?.invalid && loginForm.get('senha')?.touched"
-                placeholder="Mínimo 6 caracteres"
-              >
-              <div *ngIf="loginForm.get('senha')?.invalid && loginForm.get('senha')?.touched" 
-                   class="invalid-feedback">
-                <span *ngIf="loginForm.get('senha')?.errors?.['required']">Senha é obrigatória</span>
-                <span *ngIf="loginForm.get('senha')?.errors?.['minlength']">Senha deve ter no mínimo 6 caracteres</span>
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              class="btn btn-primary w-100 btn-lg mb-3"
-              [disabled]="loginForm.invalid || isLoading"
-            >
-              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              <i *ngIf="!isLoading" class="bi bi-box-arrow-in-right me-2"></i>
-              {{ isLoading ? 'Entrando...' : 'Entrar' }}
-            </button>
-
-          </form>
-
-          <div class="text-center mt-3">
-            <p class="text-muted mb-0">
-              Não tem uma conta? 
-              <a routerLink="/register" class="text-primary text-decoration-none fw-semibold">
-                Cadastre-se <i class="bi bi-arrow-right-short"></i>
-              </a>
-            </p>
-          </div>
-
+      <!-- Alert de erro -->
+      <div *ngIf="errorMessage" class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        <div class="flex items-center">
+          <i class="bi bi-exclamation-triangle-fill text-red-500 mr-2"></i>
+          <p class="text-red-700 text-sm">{{ errorMessage }}</p>
+          <button class="ml-auto" (click)="errorMessage = ''">
+            <i class="bi bi-x text-red-500"></i>
+          </button>
         </div>
       </div>
+
+      <!-- Formulário -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        
+        <!-- Campo Usuário -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="bi bi-person-circle mr-2"></i>Usuário
+          </label>
+          <input 
+            type="text" 
+            formControlName="usuario"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            [class.border-red-500]="loginForm.get('usuario')?.invalid && loginForm.get('usuario')?.touched"
+            placeholder="Digite seu usuário"
+          >
+          <p *ngIf="loginForm.get('usuario')?.invalid && loginForm.get('usuario')?.touched" 
+             class="mt-1 text-sm text-red-600">
+            Usuário é obrigatório
+          </p>
+        </div>
+
+        <!-- Campo Senha -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="bi bi-key-fill mr-2"></i>Senha
+          </label>
+          <input 
+            type="password" 
+            formControlName="senha"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            [class.border-red-500]="loginForm.get('senha')?.invalid && loginForm.get('senha')?.touched"
+            placeholder="Mínimo 6 caracteres"
+          >
+          <div *ngIf="loginForm.get('senha')?.invalid && loginForm.get('senha')?.touched" 
+               class="mt-1 text-sm text-red-600">
+            <p *ngIf="loginForm.get('senha')?.errors?.['required']">Senha é obrigatória</p>
+            <p *ngIf="loginForm.get('senha')?.errors?.['minlength']">Senha deve ter no mínimo 6 caracteres</p>
+          </div>
+        </div>
+
+        <!-- Botão -->
+        <button 
+          type="submit" 
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          [disabled]="loginForm.invalid || isLoading"
+        >
+          <i *ngIf="!isLoading" class="bi bi-box-arrow-in-right mr-2"></i>
+          <span *ngIf="isLoading" class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+          {{ isLoading ? 'Entrando...' : 'Entrar' }}
+        </button>
+
+      </form>
+
+      <!-- Link para cadastro -->
+      <p class="text-center mt-6 text-gray-600">
+        Não tem uma conta? 
+        <a routerLink="/register" class="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+          Cadastre-se <i class="bi bi-arrow-right"></i>
+        </a>
+      </p>
+
     </div>
   </div>
 </div>

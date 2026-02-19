@@ -9,8 +9,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { RegisterComponent } from './components/register/register.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-
-//import { routes } from './app.routes';
+import { routes } from 'src/app.routes';
+import { authInterceptorProviders } from './interceptors/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -24,9 +24,9 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
     AppRoutingModule,
     HttpClientModule,
     ReactiveFormsModule,
-    //RouterModule.forRoot(routes)
+    RouterModule.forRoot(routes)
   ],
-  //providers: [authInterceptorProviders],
+  providers: [authInterceptorProviders],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
