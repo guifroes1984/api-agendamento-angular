@@ -11,13 +11,17 @@ import { RegisterComponent } from './components/register/register.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { routes } from 'src/app.routes';
 import { authInterceptorProviders } from './interceptors/auth.interceptor';
+import { TransactionFormComponent } from './components/transaction-form/transaction-form.component';
+import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
     RegisterComponent,
-    DashboardComponent
+    DashboardComponent,
+    TransactionFormComponent,
+    ConfirmationModalComponent
   ],
   imports: [
     BrowserModule,
