@@ -21,7 +21,7 @@ export class TransactionService {
     return this.http.get<Transacao>(`${this.apiUrl}/${id}`);
   }
 
-  public ObterResumo(): Observable<Resumofinanceiro> {
+  public obterResumo(): Observable<Resumofinanceiro> {
     return this.http.get<Resumofinanceiro>(`${this.apiUrl}/resumo`);
   }
 
