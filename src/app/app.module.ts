@@ -13,6 +13,7 @@ import { routes } from 'src/app.routes';
 import { authInterceptorProviders } from './interceptors/auth.interceptor';
 import { TransactionFormComponent } from './components/transaction-form/transaction-form.component';
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
+import { NotificationComponent } from './components/notification/notification.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { ConfirmationModalComponent } from './components/confirmation-modal/conf
     RegisterComponent,
     DashboardComponent,
     TransactionFormComponent,
-    ConfirmationModalComponent
+    ConfirmationModalComponent,
+    NotificationComponent
   ],
   imports: [
     BrowserModule,

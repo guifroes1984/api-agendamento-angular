@@ -1,0 +1,10 @@
+<div *ngIf="show && notification" 
+     class="fixed top-5 right-5 z-50 animate-slide-in">
+  <div class="flex items-center p-4 rounded-lg shadow-lg border-l-4 {{ getColors() }} min-w-[320px]">
+    <i class="bi {{ getIcon() }} text-xl mr-3"></i>
+    <span class="flex-1 text-sm font-medium">{{ notification.message }}</span>
+    <button (click)="close()" class="ml-4 hover:opacity-75 transition">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+</div>

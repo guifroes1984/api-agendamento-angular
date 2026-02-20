@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { TokenService } from '../../services/token.service';
 import { DataService } from '../../services/data.service';
 import { Transacao } from '../../models/transacao.model';
+import { NotificationService } from 'src/app/services/notification.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -40,7 +41,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private tokenService: TokenService,
     private router: Router,
-    public dataService: DataService
+    public dataService: DataService, 
+    private notification: NotificationService
   ) { }
 
   ngOnInit(): void {
@@ -79,11 +81,14 @@ export class DashboardComponent implements OnInit {
           this.editingTransaction.id,
           transactionData
         );
+        this.notification.showSuccess('Transação atualizada com sucesso!');
       } else {
         await this.dataService.adicionarTransacao(transactionData);
+        this.notification.showSuccess('Transação criada com sucesso!');
       }
       this.closeTransactionForm();
     } catch (error) {
+      this.notification.showError('Erro ao salvar transação. Tente novamente.');
     }
   }
 
@@ -96,8 +101,9 @@ export class DashboardComponent implements OnInit {
     if (this.transactionToDelete) {
       try {
         await this.dataService.deletarTransacao(this.transactionToDelete);
+        this.notification.showSuccess('Transação excluída com sucesso!');
       } catch (error) {
-
+        this.notification.showError('Erro ao excluir transação.');
       }
     }
     this.cancelDelete();
