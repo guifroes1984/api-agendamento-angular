@@ -64,9 +64,34 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     return `${dia}/${mes}/${ano}`;
   }
 
+  onValorInput(event: any): void {
+    let value = event.target.value;
+    value = value.replace(/\D/g, '');
+
+    if (value) {
+      const numberValue = parseFloat(value) / 100;
+
+      const formattedValue = numberValue.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      this.form.get('valor')?.setValue(formattedValue, { emitEvent: false });
+      this.form.get('valor')?.setErrors(null);
+    }
+  }
+
   onSubmit(): void {
     if (this.form.valid) {
-      this.save.emit(this.form.value);
+      const formData = { ...this.form.value };
+
+      if (formData.valor) {
+        const numericValue = formData.valor
+          .replace(/\./g, '')
+          .replace(',', '.');
+        formData.valor = parseFloat(numericValue);
+      }
+
+      this.save.emit(formData);
     } else {
       this.form.markAllAsTouched();
     }
