@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { TokenService } from '../../services/token.service';
 import { DataService } from '../../services/data.service';
 import { Transacao } from '../../models/transacao.model';
 import { NotificationService } from 'src/app/services/notification.service';
+import { UiService } from 'src/app/services/ui.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,6 +23,7 @@ export class DashboardComponent implements OnInit {
   showDeleteConfirm = false;
   editingTransaction: Transacao | null = null;
   private transactionToDelete: number | null = null;
+  private subscription!: Subscription;
 
   loading$: Observable<boolean> = this.dataService.loading$;
   error$: Observable<string | null> = this.dataService.error$;
@@ -42,7 +44,8 @@ export class DashboardComponent implements OnInit {
     private tokenService: TokenService,
     private router: Router,
     public dataService: DataService, 
-    private notification: NotificationService
+    private notification: NotificationService, 
+    private uiService: UiService
   ) { }
 
   ngOnInit(): void {
@@ -51,6 +54,16 @@ export class DashboardComponent implements OnInit {
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
+    }
+
+    this.subscription = this.uiService.openTransactionForm$.subscribe(() => {
+      this.openNewTransaction();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
   }
 

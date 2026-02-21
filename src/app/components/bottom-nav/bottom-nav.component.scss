@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+nav {
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+button {
+  transition: all 0.2s ease;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// Animação para o botão adicionar
+.bg-blue-600 {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+  }
+}

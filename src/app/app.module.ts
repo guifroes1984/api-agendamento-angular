@@ -14,6 +14,7 @@ import { authInterceptorProviders } from './interceptors/auth.interceptor';
 import { TransactionFormComponent } from './components/transaction-form/transaction-form.component';
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
 import { NotificationComponent } from './components/notification/notification.component';
+import { BottomNavComponent } from './components/bottom-nav/bottom-nav.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { NotificationComponent } from './components/notification/notification.co
     DashboardComponent,
     TransactionFormComponent,
     ConfirmationModalComponent,
-    NotificationComponent
+    NotificationComponent,
+    BottomNavComponent
   ],
   imports: [
     BrowserModule,
