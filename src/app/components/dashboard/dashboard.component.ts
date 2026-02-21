@@ -56,6 +56,8 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    this.dataService.carregarDados();
+
     this.subscription = this.uiService.openTransactionForm$.subscribe(() => {
       this.openNewTransaction();
     });
@@ -68,6 +70,7 @@ export class DashboardComponent implements OnInit {
   }
 
   public logout(): void {
+    this.dataService.limparDados();
     this.tokenService.signOut();
     this.router.navigate(['/login']);
   }

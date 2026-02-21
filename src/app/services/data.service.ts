@@ -27,7 +27,7 @@ export class DataService {
 
   private monthlyGoalSubject = new BehaviorSubject<number>(3000);
   private profitGoalSubject = new BehaviorSubject<number>(1500);
-  
+
   monthlyGoal$ = this.monthlyGoalSubject.asObservable();
   profitGoal$ = this.profitGoalSubject.asObservable();
 
@@ -92,11 +92,11 @@ export class DataService {
     try {
       this.loadingSubject.next(true);
       const novaTransacao = await this.transactionService.criar(transacao).toPromise();
-      
+
       if (novaTransacao) {
         const current = this.transactionsSubject.getValue();
         this.transactionsSubject.next([novaTransacao, ...current]);
-        
+
         const resumo = await this.transactionService.obterResumo().toPromise();
         if (resumo) this.resumoSubject.next(resumo);
       }
@@ -110,7 +110,7 @@ export class DataService {
   async atualizarTransacao(id: number, transacao: Partial<Transacao>): Promise<void> {
     try {
       this.loadingSubject.next(true);
-      
+
       const current = this.transactionsSubject.getValue();
       const original = current.find((t: Transacao) => t.id === id);
       if (!original) throw new Error('Transação não encontrada');
@@ -124,7 +124,7 @@ export class DataService {
       }).toPromise();
 
       if (transacaoAtualizada) {
-        const updated = current.map((t: Transacao) => 
+        const updated = current.map((t: Transacao) =>
           t.id === id ? transacaoAtualizada : t
         );
         this.transactionsSubject.next(updated);
@@ -150,7 +150,7 @@ export class DataService {
 
       const resumo = await this.transactionService.obterResumo().toPromise();
       if (resumo) this.resumoSubject.next(resumo);
-      
+
       this.loadingSubject.next(false);
     } catch (erro) {
       this.loadingSubject.next(false);
@@ -171,4 +171,17 @@ export class DataService {
     if (monthly) this.monthlyGoalSubject.next(parseFloat(monthly));
     if (profit) this.profitGoalSubject.next(parseFloat(profit));
   }
+
+  public limparDados(): void {
+    this.transactionsSubject.next([]);
+    this.resumoSubject.next({
+      totalGanhos: 0,
+      totalGastos: 0,
+      lucroLiquido: 0,
+      quantidadeTransacoes: 0
+    });
+    this.loadingSubject.next(false);
+    this.errorSubject.next(null);
+  }
+
 }
