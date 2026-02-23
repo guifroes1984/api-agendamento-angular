@@ -12,6 +12,8 @@ export class TokenService {
 
   signOut(): void {
     window.sessionStorage.clear();
+    window.localStorage.removeItem('auth-token');
+    window.localStorage.removeItem('auth-user');
   }
 
   saveToken(token: string): void {

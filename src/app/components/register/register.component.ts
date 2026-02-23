@@ -44,9 +44,8 @@ export class RegisterComponent implements OnInit {
 
     this.authService.register(this.registerForm.value).subscribe({
       next: (response) => {
-        this.tokenService.saveToken(response.token);
-        this.tokenService.saveUser(response);
-        this.router.navigate(['/dashboard']);
+      this.isLoading = false;
+      this.router.navigate(['/login']);
       },
       error: (error) => {
         this.isLoading = false;
@@ -55,7 +54,6 @@ export class RegisterComponent implements OnInit {
         } else {
           this.errorMessage = 'Erro ao cadastrar. Tente novamente.';
         }
-        console.error('Erro no registro:', error);
       }
     });
   }
