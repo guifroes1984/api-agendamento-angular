@@ -1,20 +1,25 @@
 export interface Transacao {
     id: number;
     tipo: 'GANHO' | 'GASTO';
-    categoria: string;
+    categoriaId: number;
+    categoriaNome: string;
     valor: number;
     data: string;
     descricao?: string;
+    litros?: number;
+    paymentMethod?: string;
     usuarioId: number;
     usuarioNome: string;
 }
 
 export interface TransacaoRequest {
     tipo: 'GANHO' | 'GASTO';
-    categoria: string;
+    categoriaId: number;
     valor: number;
     data: string;
     descricao?: string;
+    litros?: number;
+    paymentMethod?: string;
 }
 
 export interface Resumofinanceiro {
