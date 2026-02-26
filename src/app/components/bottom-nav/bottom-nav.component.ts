@@ -39,7 +39,7 @@ export class BottomNavComponent {
   }
 
   openNewTransaction(): void {
-    console.log('BottomNav: openNewTransaction clicado'); // <-- ADICIONE ESTE LOG
+    console.log('BottomNav: openNewTransaction clicado');
     this.uiService.openTransactionForm();
   }
 }

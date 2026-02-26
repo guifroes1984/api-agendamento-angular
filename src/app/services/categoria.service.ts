@@ -14,11 +14,11 @@ export class CategoriaService {
   constructor(private http: HttpClient) { }
 
   public buscarCategoriasGanho(): Observable<Categoria[]> {
-    return this.http.get<Categoria[]>(`${this.apiUrl}/ganhos}`);
+    return this.http.get<Categoria[]>(`${this.apiUrl}/ganhos`);
   }
 
   public buscarCategoriasGasto(): Observable<Categoria[]> {
-    return this.http.get<Categoria[]>(`${this.apiUrl}/gastos}`)
+    return this.http.get<Categoria[]>(`${this.apiUrl}/gastos`);
   }
 
   public buscarMetodosPagamentos(): Observable<Categoria[]> {

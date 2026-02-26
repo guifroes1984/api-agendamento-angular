@@ -117,10 +117,12 @@ export class DataService {
 
       const transacaoAtualizada = await this.transactionService.atualizar(id, {
         tipo: transacao.tipo || original.tipo,
-        categoria: transacao.categoria || original.categoria,
+        categoriaId: transacao.categoriaId || original.categoriaId,
         valor: transacao.valor || original.valor,
         data: transacao.data || original.data,
-        descricao: transacao.descricao !== undefined ? transacao.descricao : original.descricao
+        descricao: transacao.descricao !== undefined ? transacao.descricao : original.descricao, 
+        litros: transacao.litros !== undefined ? transacao.litros : original.litros,
+        paymentMethod: transacao.paymentMethod !== undefined ? transacao.paymentMethod : original.paymentMethod
       }).toPromise();
 
       if (transacaoAtualizada) {

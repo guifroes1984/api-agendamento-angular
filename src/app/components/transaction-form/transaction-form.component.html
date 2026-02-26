@@ -1,100 +1,134 @@
 <div
-  class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-  <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full animate-slideIn">
-
-    <div class="flex justify-between items-center p-6 border-b">
-      <h2 class="text-xl font-bold text-gray-800">
-        {{ isEditMode ? 'Editar Transação' : 'Nova Transação' }}
-      </h2>
-      <button (click)="onCancel()" class="text-gray-400 hover:text-gray-600">
-        <i class="bi bi-x-lg text-xl"></i>
+  class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4"
+  (click)="onCancel()">
+  <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+    (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          {{ isEditMode ? 'Editar Lançamento' : 'Adicionar Lançamento' }}
+        </h1>
+        <p *ngIf="!isEditMode" class="text-gray-500">Registre seus ganhos e gastos.</p>
+      </div>
+      <button type="button" (click)="onCancel()" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
       </button>
     </div>
 
-    <div class="p-6">
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Tipo <span class="text-red-500">*</span>
-          </label>
-          <div class="flex space-x-4">
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer flex-1"
-              [class.border-green-500]="tipo?.value === 'GANHO'" [class.bg-green-50]="tipo?.value === 'GANHO'">
-              <input type="radio" formControlName="tipo" value="GANHO" class="mr-2">
-              <span class="text-green-600 font-medium">Ganho</span>
-            </label>
-            <label class="flex items-center p-3 border rounded-lg cursor-pointer flex-1"
-              [class.border-red-500]="tipo?.value === 'GASTO'" [class.bg-red-50]="tipo?.value === 'GASTO'">
-              <input type="radio" formControlName="tipo" value="GASTO" class="mr-2">
-              <span class="text-red-600 font-medium">Gasto</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Categoria <span class="text-red-500">*</span>
-          </label>
-          <input type="text" formControlName="categoria"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Digite a categoria (ex: Uber, Combustível, Manutenção)"
-            [class.border-red-500]="categoria?.invalid && categoria?.touched">
-          <div *ngIf="categoria?.invalid && categoria?.touched" class="mt-1 text-sm text-red-600">
-            Categoria é obrigatória
-          </div>
-          <p class="text-xs text-gray-400 mt-1">
-            * Use qualquer categoria que fizer sentido para você
-          </p>
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Valor (R$) <span class="text-red-500">*</span>
-          </label>
-          <div class="relative">
-            <span class="absolute left-3 top-2 text-gray-500">R$</span>
-            <input type="text" formControlName="valor" (input)="onValorInput($event)"
-              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="0,00" [class.border-red-500]="valor?.invalid && valor?.touched">
-          </div>
-          <div *ngIf="valor?.invalid && valor?.touched" class="mt-1 text-sm text-red-600">
-            <span *ngIf="valor?.errors?.['required']">Valor é obrigatório</span>
-            <span *ngIf="valor?.errors?.['min']">Valor deve ser maior que zero</span>
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Data <span class="text-red-500">*</span>
-          </label>
-          <input type="text" formControlName="data" placeholder="dd/mm/aaaa" maxlength="10"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            [class.border-red-500]="data?.invalid && data?.touched">
-          <div *ngIf="data?.invalid && data?.touched" class="mt-1 text-sm text-red-600">
-            Data é obrigatória
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Descrição <span class="text-gray-400 text-xs">(opcional)</span>
-          </label>
-          <textarea formControlName="descricao" rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Detalhes adicionais da transação..."></textarea>
-        </div>
-
-        <div class="flex space-x-3">
-          <button type="button" (click)="onCancel()"
-            class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition">
-            Cancelar
-          </button>
-          <button type="submit" [disabled]="form.invalid"
-            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
-            {{ isEditMode ? 'Atualizar' : 'Salvar' }}
-          </button>
-        </div>
-      </form>
+    <div *ngIf="!isEditMode" class="flex justify-center bg-gray-200 rounded-lg p-1 mb-6">
+      <button type="button" (click)="setEntryType('earning')" [class.bg-white]="entryType === 'earning'"
+        [class.text-blue-600]="entryType === 'earning'" [class.shadow]="entryType === 'earning'"
+        class="w-1/2 py-2 px-4 rounded-md font-semibold transition-all text-gray-600">
+        Ganho
+      </button>
+      <button type="button" (click)="setEntryType('expense')" [class.bg-white]="entryType === 'expense'"
+        [class.text-blue-600]="entryType === 'expense'" [class.shadow]="entryType === 'expense'"
+        class="w-1/2 py-2 px-4 rounded-md font-semibold transition-all text-gray-600">
+        Gasto
+      </button>
     </div>
+
+    <div *ngIf="isEditMode" class="text-center p-3 mb-6 rounded-lg bg-blue-50 border border-blue-200">
+      <p class="font-semibold text-blue-800">
+        Editando um {{ entryType === 'earning' ? 'Ganho' : 'Gasto' }}
+      </p>
+    </div>
+
+    <form [formGroup]="entryForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+      <div class="flex flex-col">
+        <label for="amount" class="text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+        <div class="relative">
+          <span class="absolute left-3 top-2 text-gray-500">R$</span>
+          <input id="amount" type="text" formControlName="amount" (input)="onAmountInput($event)"
+            class="w-full pl-10 pr-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="0,00" [class.border-red-500]="amount?.invalid && amount?.touched">
+        </div>
+        <div *ngIf="amount?.invalid && amount?.touched" class="mt-1 text-sm text-red-600">
+          <span *ngIf="amount?.errors?.['required']">Valor é obrigatório</span>
+          <span *ngIf="amount?.errors?.['min']">Valor deve ser maior que zero</span>
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <label for="date" class="text-sm font-medium text-gray-700 mb-1">Data</label>
+        <input id="date" type="date" formControlName="date"
+          class="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          [class.border-red-500]="date?.invalid && date?.touched">
+        <div *ngIf="date?.invalid && date?.touched" class="mt-1 text-sm text-red-600">
+          Data é obrigatória
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <label for="categoryId" class="text-sm font-medium text-gray-700 mb-1">Categoria</label>
+        <select id="categoryId" formControlName="categoryId"
+          class="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          [class.border-red-500]="categoryId?.invalid && categoryId?.touched">
+          <option value="" disabled>Selecione uma categoria</option>
+          <ng-container *ngIf="entryType === 'earning'">
+            <option *ngFor="let cat of earningCategories" [value]="cat.id">
+              {{ cat.nome }}
+            </option>
+          </ng-container>
+          <ng-container *ngIf="entryType === 'expense'">
+            <option *ngFor="let cat of expenseCategories" [value]="cat.id">
+              {{ cat.nome }}
+            </option>
+          </ng-container>
+        </select>
+        <div *ngIf="categoryId?.invalid && categoryId?.touched" class="mt-1 text-sm text-red-600">
+          Categoria é obrigatória
+        </div>
+      </div>
+      <div *ngIf="entryType === 'expense' && entryForm.value.categoryId === getCategoriaId('Combustível')"
+        class="flex flex-col">
+        <label for="liters" class="text-sm font-medium text-gray-700 mb-1">Litros (L)</label>
+        <input id="liters" type="number" step="0.01" formControlName="liters"
+          class="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="0.00">
+      </div>
+      <div *ngIf="entryType === 'earning'" class="flex flex-col">
+        <label for="paymentMethod" class="text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+        <select id="paymentMethod" formControlName="paymentMethod"
+          class="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option value="" disabled>Selecione</option>
+          <option *ngFor="let method of paymentMethods" [value]="method.id">
+            {{ method.nome }}
+          </option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label for="description" class="text-sm font-medium text-gray-700 mb-1">Descrição (Opcional)</label>
+        <textarea id="description" formControlName="description" rows="2"
+          class="w-full px-3 py-2 text-gray-900 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Ex: Corrida para o centro"></textarea>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-sm font-medium text-gray-700 mb-1">Comprovante (Opcional)</label>
+        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+          <div class="flex flex-col items-center gap-1">
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+              <path
+                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="flex text-sm text-gray-600">
+              <label for="file-upload"
+                class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500">
+                <span>Carregar um arquivo</span>
+                <input id="file-upload" name="file-upload" type="file" class="sr-only"
+                  (change)="onFileSelected($event)">
+              </label>
+              <p class="pl-1">ou arraste e solte</p>
+            </div>
+            <p *ngIf="selectedFileName" class="text-xs text-gray-500 mt-2">Arquivo: {{ selectedFileName }}</p>
+          </div>
+        </div>
+      </div>
+      <button type="submit" [disabled]="entryForm.invalid"
+        class="w-full py-3 text-base bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isEditMode ? 'Salvar Alterações' : 'Salvar Lançamento' }}
+      </button>
+    </form>
   </div>
 </div>

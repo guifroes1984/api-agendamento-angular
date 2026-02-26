@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Transacao } from 'src/app/models/transacao.model';
-import { TransactionService } from 'src/app/services/transaction.service';
+import { CategoriaService } from '../../services/categoria.service';
+import { Categoria } from '../../models/categoria.model';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-transaction-form',
@@ -9,91 +10,231 @@ import { TransactionService } from 'src/app/services/transaction.service';
   styleUrls: ['./transaction-form.component.scss']
 })
 export class TransactionFormComponent implements OnInit, OnChanges {
-
-  @Input() transaction: Transacao | null = null;
+  @Input() transaction: any = null;
   @Output() save = new EventEmitter<any>();
   @Output() cancel = new EventEmitter<void>();
 
-  form!: FormGroup;
+  entryForm: FormGroup;
   isEditMode = false;
+  entryType: 'earning' | 'expense' = 'earning';
+  selectedFileName: string | null = null;
 
-  constructor(private fb: FormBuilder) { }
+  earningCategories: Categoria[] = [];
+  expenseCategories: Categoria[] = [];
+  paymentMethods: Categoria[] = [];
 
-  ngOnInit(): void {
-    this.inicializarForm();
+  constructor(
+    private fb: FormBuilder,
+    private categoriaService: CategoriaService
+  ) {
+    this.entryForm = this.fb.group({
+      amount: ['', [Validators.required, Validators.min(0.01)]],
+      date: ['', Validators.required],
+      categoryId: ['', Validators.required],
+      description: [''],
+      liters: [''],
+      paymentMethod: ['']
+    });
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.carregarCategorias();
+    if (!this.isEditMode) {
+      this.resetForm();
+    }
+  }
+
+  carregarCategorias(): Promise<void> {
+    return new Promise((resolve) => {
+      forkJoin({
+        ganho: this.categoriaService.buscarCategoriasGanho(),
+        gasto: this.categoriaService.buscarCategoriasGasto(),
+        pagamento: this.categoriaService.buscarMetodosPagamentos()
+      }).subscribe({
+        next: (result) => {
+          this.earningCategories = result.ganho;
+          this.expenseCategories = result.gasto;
+          this.paymentMethods = result.pagamento;
+          resolve();
+        },
+        error: (err) => {
+          this.setFallbackCategories();
+          resolve();
+        }
+      });
+    });
+  }
+
+  setFallbackCategories(): void {
+    this.earningCategories = [
+      { id: 1, nome: 'Uber', tipo: 'GANHO' },
+      { id: 2, nome: '99', tipo: 'GANHO' },
+      { id: 3, nome: 'Corrida particular', tipo: 'GANHO' },
+      { id: 4, nome: 'Entrega', tipo: 'GANHO' },
+      { id: 5, nome: 'IFood', tipo: 'GANHO' },
+      { id: 999, nome: 'Outros', tipo: 'GANHO' }
+    ];
+    this.expenseCategories = [
+      { id: 6, nome: 'Combustível', tipo: 'GASTO' },
+      { id: 7, nome: 'Manutenção', tipo: 'GASTO' },
+      { id: 8, nome: 'Alimentação', tipo: 'GASTO' },
+      { id: 9, nome: 'Estacionamento', tipo: 'GASTO' },
+      { id: 10, nome: 'Pedágio', tipo: 'GASTO' },
+      { id: 11, nome: 'Multa', tipo: 'GASTO' },
+      { id: 12, nome: 'Lavagem', tipo: 'GASTO' },
+      { id: 13, nome: 'Outros', tipo: 'GASTO' }
+    ];
+    this.paymentMethods = [
+      { id: 14, nome: 'Dinheiro', tipo: 'PAGAMENTO' },
+      { id: 15, nome: 'Pix', tipo: 'PAGAMENTO' },
+      { id: 16, nome: 'Crédito', tipo: 'PAGAMENTO' },
+      { id: 17, nome: 'Débito', tipo: 'PAGAMENTO' },
+      { id: 18, nome: 'Vale', tipo: 'PAGAMENTO' },
+      { id: 19, nome: 'Outros', tipo: 'PAGAMENTO' }
+    ];
+  }
+
+  resetForm(): void {
+    const today = new Date().toISOString().split('T')[0];
+    this.entryForm.setValue({
+      amount: '',
+      date: today,
+      categoryId: '',
+      description: '',
+      liters: '',
+      paymentMethod: ''
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['transaction'] && !changes['transaction'].firstChange) {
-      this.isEditMode = !!this.transaction;
-      this.atualizarForm();
+    if (changes['transaction'] && changes['transaction'].currentValue) {
+      this.isEditMode = true;
+      this.entryType = this.transaction.tipo === 'GANHO' ? 'earning' : 'expense';
+
+      if (this.paymentMethods.length > 0) {
+        this.preencherFormularioEdicao();
+      } else {
+        setTimeout(() => this.preencherFormularioEdicao(), 200);
+      }
     }
   }
 
-  public inicializarForm(): void {
-    const hoje = new Date();
-    const dataAtual = this.formatarData(hoje);
+  preencherFormularioEdicao(): void {
 
-    this.form = this.fb.group({
-      tipo: [this.transaction?.tipo || 'GANHO', Validators.required],
-      categoria: [this.transaction?.categoria || '', Validators.required],
-      valor: [this.transaction?.valor || '', [Validators.required, Validators.min(0.01)]],
-      data: [this.transaction?.data || dataAtual, Validators.required],
-      descricao: [this.transaction?.descricao || '']
+    const valorFormatado = this.transaction.valor.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
 
-    this.isEditMode = !!this.transaction;
-  }
+    const dataFormatada = this.formatDateForInput(this.transaction.data);
 
-  public atualizarForm(): void {
-    if (this.form && this.transaction) {
-      this.form.patchValue({
-        tipo: this.transaction.tipo,
-        categoria: this.transaction.categoria,
-        valor: this.transaction.valor,
-        data: this.transaction.data,
-        descricao: this.transaction.descricao || ''
-      });
+    let paymentMethodId = null;
+    if (this.transaction.paymentMethod) {
+      const encontrado = this.paymentMethods.find(
+        m => m.nome === this.transaction.paymentMethod
+      );
+
+      if (encontrado) {
+        paymentMethodId = encontrado.id;
+      }
     }
+    this.entryForm.patchValue({
+      amount: valorFormatado,
+      date: dataFormatada,
+      categoryId: this.transaction.categoriaId,
+      description: this.transaction.descricao || '',
+      liters: this.transaction.litros || '',
+      paymentMethod: paymentMethodId
+    });
   }
 
-  public formatarData(date: Date): string {
-    const dia = date.getDate().toString().padStart(2, '0');
-    const mes = (date.getMonth() + 1).toString().padStart(2, '0');
-    const ano = date.getFullYear();
-    return `${dia}/${mes}/${ano}`;
+  getCategoriaId(nome: string): number | null {
+    const categoriaGasto = this.expenseCategories.find(c => c.nome === nome);
+    if (categoriaGasto) return categoriaGasto.id;
+    const categoriaGanho = this.earningCategories.find(c => c.nome === nome);
+    if (categoriaGanho) return categoriaGanho.id;
+
+    return null;
   }
 
-  onValorInput(event: any): void {
+  setEntryType(type: 'earning' | 'expense'): void {
+    this.entryType = type;
+    this.entryForm.patchValue({
+      categoryId: '',
+      liters: '',
+      paymentMethod: ''
+    });
+  }
+
+  onAmountInput(event: any): void {
     let value = event.target.value;
     value = value.replace(/\D/g, '');
 
     if (value) {
       const numberValue = parseFloat(value) / 100;
-
       const formattedValue = numberValue.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      this.form.get('valor')?.setValue(formattedValue, { emitEvent: false });
-      this.form.get('valor')?.setErrors(null);
+      this.entryForm.patchValue({ amount: formattedValue }, { emitEvent: false });
     }
   }
 
-  onSubmit(): void {
-    if (this.form.valid) {
-      const formData = { ...this.form.value };
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFileName = file.name;
+    }
+  }
 
-      if (formData.valor) {
-        const numericValue = formData.valor
-          .replace(/\./g, '')
-          .replace(',', '.');
-        formData.valor = parseFloat(numericValue);
+  formatDateForInput(dateStr: string): string {
+    if (!dateStr) return '';
+    if (dateStr.includes('/')) {
+      const [day, month, year] = dateStr.split('/');
+      return `${year}-${month}-${day}`;
+    }
+    return dateStr;
+  }
+
+  formatDateToBackend(dateStr: string): string {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  onSubmit(): void {
+    if (this.entryForm.valid) {
+      const formValue = this.entryForm.value;
+
+      let amount = formValue.amount;
+      if (typeof amount === 'string') {
+        amount = amount.replace(/\./g, '').replace(',', '.');
+        amount = parseFloat(amount);
       }
 
-      this.save.emit(formData);
+      let paymentMethodNome = null;
+      if (formValue.paymentMethod && this.paymentMethods.length > 0) {
+
+        const metodoEncontrado = this.paymentMethods.find(
+          m => m.id === Number(formValue.paymentMethod)
+        );
+
+        paymentMethodNome = metodoEncontrado ? metodoEncontrado.nome : null;
+      }
+
+      const transactionData: any = {
+        tipo: this.entryType === 'earning' ? 'GANHO' : 'GASTO',
+        categoriaId: formValue.categoryId,
+        valor: amount,
+        data: this.formatDateToBackend(formValue.date),
+        descricao: formValue.description || '',
+        litros: formValue.liters || null,
+        paymentMethod: paymentMethodNome
+      };
+
+      this.save.emit(transactionData);
     } else {
-      this.form.markAllAsTouched();
+      this.entryForm.markAllAsTouched();
     }
   }
 
@@ -101,10 +242,15 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     this.cancel.emit();
   }
 
-  get tipo() { return this.form.get('tipo'); }
-  get categoria() { return this.form.get('categoria'); }
-  get valor() { return this.form.get('valor'); }
-  get data() { return this.form.get('data'); }
-  get descricao() { return this.form.get('descricao'); }
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    this.onCancel();
+  }
 
+  get amount() { return this.entryForm.get('amount'); }
+  get date() { return this.entryForm.get('date'); }
+  get categoryId() { return this.entryForm.get('categoryId'); }
+  get description() { return this.entryForm.get('description'); }
+  get liters() { return this.entryForm.get('liters'); }
+  get paymentMethod() { return this.entryForm.get('paymentMethod'); }
 }
