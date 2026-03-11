@@ -3,6 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CategoriaService } from '../../services/categoria.service';
 import { Categoria } from '../../models/categoria.model';
 import { forkJoin } from 'rxjs';
+import { UploadService } from 'src/app/services/upload.service';
+import { Comprovante } from 'src/app/models/comprovate.model';
+import { NotificationService } from 'src/app/services/notification.service';
+import { DataService } from 'src/app/services/data.service';
 
 @Component({
   selector: 'app-transaction-form',
@@ -18,6 +22,11 @@ export class TransactionFormComponent implements OnInit, OnChanges {
   isEditMode = false;
   entryType: 'earning' | 'expense' = 'earning';
   selectedFileName: string | null = null;
+  selectedFile: File | null = null;
+  isUploading = false;
+  comprovanteExistente: Comprovante | null = null;
+  showDeleteConfirm = false;
+  comprovanteToDelete: boolean = false;
 
   earningCategories: Categoria[] = [];
   expenseCategories: Categoria[] = [];
@@ -25,7 +34,10 @@ export class TransactionFormComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private categoriaService: CategoriaService
+    private categoriaService: CategoriaService,
+    private uploadService: UploadService,
+    private notification: NotificationService,
+    public dataService: DataService,
   ) {
     this.entryForm = this.fb.group({
       amount: ['', [Validators.required, Validators.min(0.01)]],
@@ -39,9 +51,28 @@ export class TransactionFormComponent implements OnInit, OnChanges {
 
   async ngOnInit(): Promise<void> {
     await this.carregarCategorias();
+    if (this.transaction?.id) {
+      await this.carregarComprovanteExistente(this.transaction.id);
+    }
     if (!this.isEditMode) {
       this.resetForm();
     }
+  }
+
+  carregarComprovanteExistente(transacaoId: number): Promise<void> {
+    return new Promise((resolve) => {
+      this.uploadService.buscarPorTransacaoId(transacaoId).subscribe({
+        next: (resposta: any) => {
+          const comprovante = Array.isArray(resposta) ? resposta[0] : resposta;
+          this.comprovanteExistente = comprovante;
+          resolve();
+        },
+        error: () => {
+          this.comprovanteExistente = null;
+          resolve();
+        }
+      });
+    });
   }
 
   carregarCategorias(): Promise<void> {
@@ -184,6 +215,7 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     const file = event.target.files[0];
     if (file) {
       this.selectedFileName = file.name;
+      this.selectedFile = file;
     }
   }
 
@@ -202,40 +234,82 @@ export class TransactionFormComponent implements OnInit, OnChanges {
     return `${day}/${month}/${year}`;
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.entryForm.valid) {
-      const formValue = this.entryForm.value;
+      this.isUploading = true;
 
-      let amount = formValue.amount;
-      if (typeof amount === 'string') {
-        amount = amount.replace(/\./g, '').replace(',', '.');
-        amount = parseFloat(amount);
+      try {
+        const formValue = this.entryForm.value;
+        let amount = formValue.amount;
+        if (typeof amount === 'string') {
+          amount = amount.replace(/\./g, '').replace(',', '.');
+          amount = parseFloat(amount);
+        }
+
+        const transactionData = {
+          tipo: this.entryType === 'earning' ? 'GANHO' : 'GASTO',
+          categoriaId: formValue.categoryId,
+          valor: amount,
+          data: this.formatDateToBackend(formValue.date),
+          descricao: formValue.description || '',
+          litros: formValue.liters || null,
+          paymentMethod: formValue.paymentMethod ?
+            this.paymentMethods.find(m => m.id === Number(formValue.paymentMethod))?.nome : null,
+          arquivo: this.selectedFile
+        };
+        this.save.emit(transactionData);
+
+      } catch (error) {
+        this.isUploading = false;
       }
-
-      let paymentMethodNome = null;
-      if (formValue.paymentMethod && this.paymentMethods.length > 0) {
-
-        const metodoEncontrado = this.paymentMethods.find(
-          m => m.id === Number(formValue.paymentMethod)
-        );
-
-        paymentMethodNome = metodoEncontrado ? metodoEncontrado.nome : null;
-      }
-
-      const transactionData: any = {
-        tipo: this.entryType === 'earning' ? 'GANHO' : 'GASTO',
-        categoriaId: formValue.categoryId,
-        valor: amount,
-        data: this.formatDateToBackend(formValue.date),
-        descricao: formValue.description || '',
-        litros: formValue.liters || null,
-        paymentMethod: paymentMethodNome
-      };
-
-      this.save.emit(transactionData);
     } else {
       this.entryForm.markAllAsTouched();
     }
+  }
+
+  visualizarComprovante(): void {
+    if (this.comprovanteExistente?.caminho) {
+      window.open('http://localhost:8080' + this.comprovanteExistente.caminho, '_blank');
+    }
+  }
+
+  removerComprovante(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.showDeleteConfirm = true;
+  }
+
+  confirmDeleteComprovante(event?: MouseEvent): void {
+  if (event) event.stopPropagation();
+  this.showDeleteConfirm = false;
+
+  this.uploadService.deletarComprovante(this.transaction.id).subscribe({
+    next: () => {
+      this.comprovanteExistente = null;
+      
+      // 🔥 FORÇA RECARREGAMENTO COMPLETO
+      this.dataService.carregarDados();  // <-- PRIMEIRO
+      
+      // 🔥 DEPOIS ATUALIZA A FLAG LOCALMENTE (redundante, mas seguro)
+      setTimeout(() => {
+        this.dataService.atualizarFlagComprovante(this.transaction.id, false);
+      }, 500);
+      
+      this.notification.showSuccess('Comprovante removido com sucesso!');
+    },
+    error: (err) => {
+      this.notification.showError('Erro ao remover comprovante');
+    }
+  });
+}
+
+  cancelDeleteComprovante(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.showDeleteConfirm = false;
   }
 
   onCancel(): void {

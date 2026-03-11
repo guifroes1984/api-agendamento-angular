@@ -6,6 +6,8 @@ import { DataService } from '../../services/data.service';
 import { Transacao } from '../../models/transacao.model';
 import { NotificationService } from 'src/app/services/notification.service';
 import { UiService } from 'src/app/services/ui.service';
+import { UploadService } from 'src/app/services/upload.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,7 +20,7 @@ export class DashboardComponent implements OnInit {
 
   successMessage: string | null = null;
   errorMessage: string | null = null;
-  
+
   showTransactionForm = false;
   showDeleteConfirm = false;
   editingTransaction: Transacao | null = null;
@@ -43,14 +45,15 @@ export class DashboardComponent implements OnInit {
   constructor(
     private tokenService: TokenService,
     private router: Router,
-    public dataService: DataService, 
-    private notification: NotificationService, 
-    private uiService: UiService
+    public dataService: DataService,
+    private notification: NotificationService,
+    private uiService: UiService,
+    private uploadService: UploadService
   ) { }
 
   ngOnInit(): void {
     this.user = this.tokenService.getUser();
-    
+
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
@@ -61,6 +64,9 @@ export class DashboardComponent implements OnInit {
     this.subscription = this.uiService.openTransactionForm$.subscribe(() => {
       this.openNewTransaction();
     });
+    window.addEventListener('comprovante-removido', (event: any) => {
+    this.dataService.carregarDados();
+  });
   }
 
   ngOnDestroy(): void {
@@ -91,20 +97,33 @@ export class DashboardComponent implements OnInit {
   }
 
   async saveTransaction(transactionData: any): Promise<void> {
+
     try {
+      let transacaoSalva;
+
       if (this.editingTransaction) {
-        await this.dataService.atualizarTransacao(
+        transacaoSalva = await this.dataService.atualizarTransacao(
           this.editingTransaction.id,
           transactionData
         );
         this.notification.showSuccess('Transação atualizada com sucesso!');
       } else {
-        await this.dataService.adicionarTransacao(transactionData);
+        transacaoSalva = await this.dataService.adicionarTransacao(transactionData);
         this.notification.showSuccess('Transação criada com sucesso!');
       }
+
+      if (transactionData.arquivo && transacaoSalva?.id) {
+
+        await this.uploadService.uploadComprovante(transacaoSalva.id, transactionData.arquivo).toPromise();
+
+        await this.dataService.carregarDados();
+
+        this.notification.showInfo('Comprovante anexado com sucesso!');
+      }
+
       this.closeTransactionForm();
     } catch (error) {
-      this.notification.showError('Erro ao salvar transação. Tente novamente.');
+      this.notification.showError('Erro ao salvar transação');
     }
   }
 
@@ -140,4 +159,14 @@ export class DashboardComponent implements OnInit {
       currency: 'BRL'
     }).format(value);
   }
+
+  visualizarComprovante(transacaoId: number): void {
+    this.uploadService.buscarPorTransacaoId(transacaoId).subscribe({
+      next: (comprovante: any) => {
+        const urlCompleta = environment.baseUrl + comprovante.caminho;
+        window.open(urlCompleta, '_blank');
+      }
+    });
+  }
+
 }

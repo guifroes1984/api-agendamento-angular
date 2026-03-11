@@ -10,6 +10,7 @@ export interface Transacao {
     paymentMethod?: string;
     usuarioId: number;
     usuarioNome: string;
+    temComprovante?: boolean;
 }
 
 export interface TransacaoRequest {

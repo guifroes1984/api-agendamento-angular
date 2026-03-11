@@ -70,44 +70,48 @@ export class DataService {
   }
 
   public carregarDados(): void {
-    if (!this.tokenService.isLoggedIn()) return;
+  if (!this.tokenService.isLoggedIn()) return;
+  
+  Promise.all([
+    this.transactionService.listarTodas().toPromise(),
+    this.transactionService.obterResumo().toPromise()
+  ]).then(([transacoes, resumo]) => {
+    if (transacoes) {
+      this.transactionsSubject.next(transacoes);  // <-- SUBSTITUI A LISTA
+    }
+    if (resumo) this.resumoSubject.next(resumo);
+  });
+}
 
-    this.loadingSubject.next(true);
-    this.errorSubject.next(null);
-
-    Promise.all([
-      this.transactionService.listarTodas().toPromise(),
-      this.transactionService.obterResumo().toPromise()
-    ]).then(([transacoes, resumo]) => {
-      if (transacoes) this.transactionsSubject.next(transacoes);
-      if (resumo) this.resumoSubject.next(resumo);
-      this.loadingSubject.next(false);
-    }).catch(erro => {
-      this.errorSubject.next('Erro ao carregar dados do servidor');
-      this.loadingSubject.next(false);
-    });
-  }
-
-  async adicionarTransacao(transacao: Omit<Transacao, 'id' | 'usuarioId' | 'usuarioNome'>): Promise<void> {
+  async adicionarTransacao(transacao: Omit<Transacao, 'id' | 'usuarioId' | 'usuarioNome'>): Promise<Transacao> {
     try {
       this.loadingSubject.next(true);
       const novaTransacao = await this.transactionService.criar(transacao).toPromise();
 
       if (novaTransacao) {
+        const transacaoComFlag = {
+          ...novaTransacao,
+          temComprovante: false
+        };
+
         const current = this.transactionsSubject.getValue();
-        this.transactionsSubject.next([novaTransacao, ...current]);
+        this.transactionsSubject.next([transacaoComFlag, ...current]);
 
         const resumo = await this.transactionService.obterResumo().toPromise();
         if (resumo) this.resumoSubject.next(resumo);
+
+        this.loadingSubject.next(false);
+        return transacaoComFlag;
       }
       this.loadingSubject.next(false);
+      throw new Error('Erro ao criar transação');
     } catch (erro) {
       this.loadingSubject.next(false);
       throw erro;
     }
   }
 
-  async atualizarTransacao(id: number, transacao: Partial<Transacao>): Promise<void> {
+  async atualizarTransacao(id: number, transacao: Partial<Transacao>): Promise<Transacao> {
     try {
       this.loadingSubject.next(true);
 
@@ -120,21 +124,30 @@ export class DataService {
         categoriaId: transacao.categoriaId || original.categoriaId,
         valor: transacao.valor || original.valor,
         data: transacao.data || original.data,
-        descricao: transacao.descricao !== undefined ? transacao.descricao : original.descricao, 
+        descricao: transacao.descricao !== undefined ? transacao.descricao : original.descricao,
         litros: transacao.litros !== undefined ? transacao.litros : original.litros,
         paymentMethod: transacao.paymentMethod !== undefined ? transacao.paymentMethod : original.paymentMethod
       }).toPromise();
 
       if (transacaoAtualizada) {
+        const transacaoComFlag = {
+          ...transacaoAtualizada,
+          temComprovante: original.temComprovante || false
+        };
+
         const updated = current.map((t: Transacao) =>
-          t.id === id ? transacaoAtualizada : t
+          t.id === id ? transacaoComFlag : t
         );
         this.transactionsSubject.next(updated);
 
         const resumo = await this.transactionService.obterResumo().toPromise();
         if (resumo) this.resumoSubject.next(resumo);
+
+        this.loadingSubject.next(false);
+        return transacaoComFlag;
       }
       this.loadingSubject.next(false);
+      throw new Error('Erro ao atualizar transação');
     } catch (erro) {
       this.loadingSubject.next(false);
       throw erro;
@@ -184,6 +197,17 @@ export class DataService {
     });
     this.loadingSubject.next(false);
     this.errorSubject.next(null);
+  }
+
+  public atualizarFlagComprovante(transacaoId: number, temComprovante: boolean): void {
+    const current = this.transactionsSubject.getValue();
+    const updated = current.map(t => {
+      if (t.id === transacaoId) {
+        return { ...t, temComprovante };
+      }
+      return t;
+    });
+    this.transactionsSubject.next(updated);
   }
 
 }
